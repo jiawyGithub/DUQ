@@ -1,29 +1,21 @@
 import torch
 import torch.utils.data
-from torchvision import datasets
 from torch.nn import functional as F
-import torchvision.transforms as transforms
 
 from model.cnn_duq import CNN_DUQ
-from config.train_config import get_args
-from utils.datasets import MNIST
+from config.deq_minist_config import get_args
+from utils.datasets import MNIST, FashionMNIST
 
 use_gpu = torch.cuda.is_available()
 args = get_args()
-
-def accuracy(pred, target, topk=(1,)):
-#     correct = pred.eq(target.view(1, -1).expand_as(pred))
-#     res = []
-#     for k in topk:
-#         correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
-#         res.append(correct_k.mul_(100.0 / batch_size))
-#     return res
-    return 1
-def bce():
-    return 1
-
-def gradient_penalty():
-    return 1
+train_data = {
+    "mnist": MNIST(root="data/", train=True, download=True),
+    "fashion_mnist": FashionMNIST(root="data/", train=True, download=True)
+}
+test_data = {
+    "mnist": MNIST(root="data/", train=False, download=True),
+    "fashion_mnist": FashionMNIST(root="data/", train=False, download=True)
+}
 
 def train_model(model, optimizer, train_loader):
     model.train()
@@ -46,20 +38,21 @@ def train_model(model, optimizer, train_loader):
         with torch.no_grad():
             model.eval()
             model.update_embeddings(x, y)
-               
+        
+        # 计算预测正确的样本个数
         _, _target_pred = y_pred.topk(1)
         target_pred = _target_pred.view_as(target)
         correct += target.eq(target_pred).sum().item()
         print('correct', correct)
 
+    # 计算准确率
     percentage_correct = 100.0 * correct / len(train_loader.dataset)
     return percentage_correct
 
 def main():
-    
     print('loading dataset...')
-    train_dataset = MNIST(transform=transforms.ToTensor(), root="data/", train=True, download=True) 
-    test_dataset = MNIST(transform=transforms.ToTensor(),root="data/", train=False, download=True)
+    train_dataset = train_data[args.dataset] 
+    test_dataset = test_data[args.dataset]
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=128,
                                                num_workers=0,
