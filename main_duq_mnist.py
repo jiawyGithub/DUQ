@@ -20,6 +20,7 @@ test_data = {
 def train_model(model, optimizer, train_loader):
     model.train()
     correct = 0
+    total_loss = 0
     
     for i, (x, target) in enumerate(train_loader):
         y = F.one_hot(target, num_classes=10).float()
@@ -38,19 +39,46 @@ def train_model(model, optimizer, train_loader):
         with torch.no_grad():
             model.eval()
             model.update_embeddings(x, y)
-        
+
+        # 计算预测正确的样本个数和总损失
+        _, _target_pred = y_pred.topk(1)
+        target_pred = _target_pred.view_as(target)
+        correct += target.eq(target_pred).sum().item()
+        total_loss += loss.item()
+
+    # 计算准确率和平均loss
+    l = len(train_loader.dataset)
+    percentage_correct = 100.0 * correct / l
+    avg_loss = total_loss / l
+
+    return percentage_correct, avg_loss
+
+def evaluate(model, test_loader):
+    model.eval()
+    correct = 0
+
+    for i, (x, target) in enumerate(test_loader):
+
+        y = F.one_hot(target, num_classes=10).float()
+        if use_gpu:
+            x, y = x.cuda(), y.cuda()
+        x.requires_grad_(True)
+
+        z, y_pred = model(x)
+
         # 计算预测正确的样本个数
         _, _target_pred = y_pred.topk(1)
         target_pred = _target_pred.view_as(target)
         correct += target.eq(target_pred).sum().item()
-        print('correct', correct)
+    
+    # 计算准确率和平均loss
+    l = len(test_loader.dataset)
+    percentage_correct = 100.0 * correct / l
 
-    # 计算准确率
-    percentage_correct = 100.0 * correct / len(train_loader.dataset)
     return percentage_correct
 
 def main():
-    print('loading dataset...')
+    print(f'loading dataset <{args.dataset}>...')
     train_dataset = train_data[args.dataset] 
     test_dataset = test_data[args.dataset]
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
@@ -67,27 +95,29 @@ def main():
     input_size = 28
     num_classes = 10
     embedding_size = 256
-    learnable_length_scale = False
     gamma = 0.999
+    learnable_length_scale = False
     length_scale = 0.05
     model = CNN_DUQ(input_size,num_classes,embedding_size,learnable_length_scale,length_scale,gamma,)
     if use_gpu:
         model = model.cuda()
     optimizer = torch.optim.SGD(model.parameters(), lr=0.05, momentum=0.9, weight_decay=1e-4)
 
+    print('training...')
     for epoch in range(1, args.n_epoch+1):  
-        Acc = train_model(model, optimizer, train_loader)
-        # Acc = accuracy()
-        # BCE = bce()
-        # GP = gradient_penalty()
-
+        acc, avg_loss = train_model(model, optimizer, train_loader)
+        torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 20], gamma=0.2) # 调整学习率
         print(
             f"Validation Results - Epoch: {epoch} "
-            f"Acc: {Acc:.4f}%"
-            # f"BCE: {BCE:.2f} "
-            # f"GP: {GP:.6f} "
+            f"Acc: {acc:.4f}% "
+            f"AvgLoss: {avg_loss:.4f} "
         )
         print(f"Sigma: {model.sigma}")
+
+        test_acc = evaluate(model, test_loader)
+        print(
+            f"TestAcc: {test_acc:.4f}% "
+        )
 
 if __name__=='__main__':
     main()
