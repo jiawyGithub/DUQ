@@ -88,7 +88,7 @@ def train_model(model, optimizer, train_loader):
         if args.debug and  (i+1) % 2 == 0:
             print(
                 f"Validation Results - Iter: {i+1} "
-                f"correct: {correct:.4f}% "
+                f"correct: {correct} "
                 f"loss: {loss.item():.4f} "
                 f"BCE: {bce.item():.2f} "
                 f"GP: {gp.item():.2f} "
