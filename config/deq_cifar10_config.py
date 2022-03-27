@@ -10,7 +10,7 @@ def get_args():
     parser.add_argument('--debug', type=bool, default=True)
 
     parser.add_argument('--n_epoch', type=int, default=200)
-    parser.add_argument('--dataset', type = str, default = 'mnist', help = 'mnist, fashion_mnist')
+    parser.add_argument('--dataset', type = str, default = 'cifar10', help = 'cifar10')
 
     args = parser.parse_args()
 
