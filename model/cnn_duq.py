@@ -52,12 +52,12 @@ class CNN_DUQ(Model):
             torch.normal(torch.zeros(embedding_size, num_classes, 256), 0.05)
         ) # size(256, 10, 256)
         # Nc是在一个minibatch 中分配给类c的数据点的数量
-        self.register_buffer("N", torch.ones(num_classes) * 12)
+        self.register_buffer("N", torch.ones(num_classes) * 12) # 长度为10的一维数组，元素是12，
         # m/N是类中心
         self.register_buffer(
             "m", torch.normal(torch.zeros(embedding_size, num_classes), 1)
-        )
-        self.m = self.m * self.N.unsqueeze(0) # 增加维度
+        ) # size(256, 10) 元素是符合标准正态分布N(0,1)的随机数 
+        self.m = self.m * self.N.unsqueeze(0) # 增加维度 m的各个元素乘12
 
         # σ是超参数，有时称为⻓度尺度。
         if learnable_length_scale:

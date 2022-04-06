@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-
+# 
 class ResNet_DUQ(nn.Module):
     def __init__(
         self,
@@ -54,5 +54,5 @@ class ResNet_DUQ(nn.Module):
     def forward(self, x):
         z = self.feature_extractor(x)
         y_pred = self.rbf(z)
-
+        
         return y_pred

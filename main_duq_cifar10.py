@@ -2,7 +2,7 @@ import torch
 import torch.utils.data
 from torch.nn import functional as F
 from torchvision import datasets, transforms
-from torchvision.models import resnet18
+from torchvision.models import resnet50
 
 import json
 
@@ -29,9 +29,9 @@ def calc_gradients_input(x, y_pred):
         inputs=x,
         grad_outputs=torch.ones_like(y_pred),
         create_graph=True,
-    )[0]
+    )[0] # Size([128, 3, 32, 32])
 
-    gradients = gradients.flatten(start_dim=1)
+    gradients = gradients.flatten(start_dim=1)  # [128, 3072]
 
     return gradients
 
@@ -142,8 +142,7 @@ def main():
                                               shuffle=False)
 
     print('building model...')
-    milestones = [25, 50, 75]
-    feature_extractor = resnet18()
+    feature_extractor = resnet50()
     # Adapted resnet from:
     # https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py
     feature_extractor.conv1 = torch.nn.Conv2d(
@@ -168,8 +167,8 @@ def main():
     )
     if use_gpu:
         model = model.cuda()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.05, momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=milestones, gamma=0.2)
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.milestones, gamma=args.scheduler_gama)
 
     print('training...')
     for epoch in range(1, args.n_epoch+1):  

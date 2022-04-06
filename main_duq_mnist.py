@@ -91,13 +91,13 @@ def main():
     train_dataset = train_data[args.dataset] 
     test_dataset = test_data[args.dataset]
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                               batch_size=128,
-                                               num_workers=0,
+                                               batch_size=args.batch_size,
+                                               num_workers=args.num_workers,
                                                drop_last=True,
                                                shuffle=True)
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
-                                              batch_size=128, 
-                                              num_workers=0,
+                                              batch_size=args.batch_size, 
+                                              num_workers=args.num_workers,
                                               shuffle=False)
 
     print('building model...')
@@ -110,8 +110,8 @@ def main():
     model = CNN_DUQ(input_size,num_classes,embedding_size,learnable_length_scale,length_scale,gamma,)
     if use_gpu:
         model = model.cuda()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.05, momentum=0.9, weight_decay=1e-4)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 20], gamma=0.2) # 调整学习率
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentun, weight_decay=args.weight_decay)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.milestones, gamma=args.scheduler_gama) # 调整学习率
 
     print('training...')
     for epoch in range(1, args.n_epoch+1):  
